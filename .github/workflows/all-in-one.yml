@@ -1,0 +1,48 @@
+name: all_in_one
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout with submodule
+        uses: actions/checkout@v2
+        with:
+          submodules: true # ignore evm submodules
+
+      # Runs a set of commands using the runners shell
+      - name: Git deinit all submodule
+        run: |
+          submodules=$(git submodule | cut --delimiter ' ' --fields 3)
+          for sub in $submodules; do
+            mv "$sub" tmp && rm tmp/.git
+            git submodule deinit "$sub" && git rm "$sub"
+            mv tmp "$sub" && git add "$sub"
+          done
+          last_sha1=$(git rev-parse HEAD)
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git lfs uninstall
+          git commit -am "deinit all submodule for $last_sha1"
+
+      - name: Merge
+          # git remote add vsf-all-in-one https://github.com/liangyongxiang/vsf-all-in-one.g
+        run: |
+          git remote add vsf-all-in-one https://github.com/liangyongxiang/vsf.git
+          git fetch vsf-all-in-one
+          git merge --strategy=ours --allow-unrelated-histories vsf-all-in-one/all-in-one
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.API_TOKEN_GITHUB }}
+          branch: all-in-one
+          #repository: liangyongxiang/vsf-all-in-one
