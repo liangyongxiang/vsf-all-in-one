@@ -16,6 +16,8 @@ jobs:
       - name: Checkout with submodule
         uses: actions/checkout@v2
         with:
+          persist-credentials: false
+          fetch-depth: 0
           submodules: true # ignore evm submodules
 
       - name: Deinit all submodule
@@ -34,17 +36,22 @@ jobs:
           git config --local user.name "github-actions[bot]"
           last_sha1=$(git rev-parse HEAD)
           git commit -am "deinit all submodule for $last_sha1"
-          
+
       - name: Fetch upstream
         run: |
           git remote add aio_repo https://github.com/liangyongxiang/vsf-all-in-one.git
           git fetch aio_repo
 
       # Runs a set of commands using the runners shell
-      - name: Merge and Push
+      - name: Merge
         run: |
           git remote -v
           git branch -v
           git merge --strategy=ours --allow-unrelated-histories aio_repo/master
-          git push aio_repo
 
+      - name: Push
+        uses: ad-m/github-push-action@master
+        with:
+          repository: liangyongxiang/vsf-all-in-one
+          github_token: ${{ secrets.VSF_AIO }}
+          branch: master
