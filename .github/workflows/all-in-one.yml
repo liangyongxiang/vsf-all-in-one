@@ -18,8 +18,7 @@ jobs:
         with:
           submodules: true # ignore evm submodules
 
-      # Runs a set of commands using the runners shell
-      - name: Git deinit all submodule
+      - name: Deinit all submodule
         run: |
           submodules=$(git submodule | cut --delimiter ' ' --fields 3)
           for sub in $submodules; do
@@ -27,22 +26,25 @@ jobs:
             git submodule deinit "$sub" && git rm "$sub"
             mv tmp "$sub" && git add "$sub"
           done
-          last_sha1=$(git rev-parse HEAD)
+
+      - name: Commit changes
+        run: |
+          git lfs uninstall
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git lfs uninstall
+          last_sha1=$(git rev-parse HEAD)
           git commit -am "deinit all submodule for $last_sha1"
-
-      - name: Merge
-          # git remote add vsf-all-in-one https://github.com/liangyongxiang/vsf-all-in-one.g
+          
+      - name: Fetch upstream
         run: |
-          git remote add vsf-all-in-one https://github.com/liangyongxiang/vsf.git
-          git fetch vsf-all-in-one
-          git merge --strategy=ours --allow-unrelated-histories vsf-all-in-one/all-in-one
+          git remote add aio_repo https://github.com/liangyongxiang/vsf_all_in_one.git
+          git fetch aio_repo
 
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.API_TOKEN_GITHUB }}
-          branch: all-in-one
-          #repository: liangyongxiang/vsf-all-in-one
+      # Runs a set of commands using the runners shell
+      - name: Merge and Push
+        run: |
+          git remote -v
+          git branch -v
+          git merge --strategy=ours --allow-unrelated-histories aio_repo/master
+          git push aio_repo
+
