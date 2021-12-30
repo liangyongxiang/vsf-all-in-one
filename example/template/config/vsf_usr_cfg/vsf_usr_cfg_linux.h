@@ -174,6 +174,8 @@
 //#define VSF_ASSERT(...)
 
 #define VSF_HAL_USE_DEBUG_STREAM                        ENABLED
+#define VSF_HAL_USE_USART                               DISABLED
+
 
 #define VSF_SYSTIMER_FREQ                               (0ul)
 
